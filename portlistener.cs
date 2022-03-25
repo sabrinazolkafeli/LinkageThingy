@@ -16,9 +16,11 @@ public class Portlistener : MonoBehaviour
     public GameObject squaretwo;
     public GameObject squarethree;    
     public GameObject squarefour;
+    public GameObject squarefive;
+    public GameObject PistonOneEnd;
     public GameObject Circle;
-    // public GameObject Slider;
     public LineRenderer Line;
+    public LineRenderer PistonLine;
     public LineRenderer BoomOneCurve;
 
     
@@ -38,43 +40,18 @@ public class Portlistener : MonoBehaviour
 
     public bool running; //nothing
 
-    private void Update()
-    {
-        squareone.transform.position = receivedPos1; //assigning receivedPos in SendAndReceiveData()
-        squaretwo.transform.position = receivedPos2;
-        squarethree.transform.position = receivedPos3;
-        squarefour.transform.position = receivedPos4;
-
-        squareone.transform.localScale = size; //assigning receivedPos in SendAndReceiveData()
-        squaretwo.transform.localScale = size;
-        squarethree.transform.localScale = size;
-        squarefour.transform.localScale = size;
-
-        if(!receivedPos4.Equals(zeros)&&!receivedPos3.Equals(zeros))
-        {
-            Vector3[] LinePositions = {receivedPos3,receivedPos4};
-            Line.SetPositions(LinePositions);
-        }
-        else
-        {
-            Vector3[] LinePositions = {zeros, zeros};
-            Line.SetPositions(LinePositions);
-        }
-
-        for (int i=0; i<BoomOnePos.Length; i++)
-        {
-            BoomOneCurve.SetPositions(BoomOnePos[i], BoomOnePos[i+1]);
-        }
-       
-    }
-
     public void Start() //private
     {
         ThreadStart ts = new ThreadStart(GetInfo);
         mThread = new Thread(ts);
         mThread.Start();
-    }
 
+        // float PistonFractionOne = 0.5f;
+        // Vector3[] BoomOnePos = Calculations(receivedPos3, receivedPos4, receivedPos5, PistonFractionOne);
+        // BoomOneCurve.positionCount = BoomOnePos.Length;
+        BoomOneCurve.positionCount = 3;
+    }
+    
     public void GetInfo() //nothing
     {
         localAdd = IPAddress.Parse(connectionIP);
@@ -238,7 +215,7 @@ public class Portlistener : MonoBehaviour
         return result;
     }
 
-// // Circle code here
+// // // Circle code here
 //     public int vertexCount = 40;
 //     public float lineWidth = 0.2f;
 //     private float radius;
@@ -284,7 +261,7 @@ public class Portlistener : MonoBehaviour
 
 //     }
 
-// George's Calculation here
+// // George's Calculation here
 
     public float DistanceBetweenPoints(Vector3 v1, Vector3 v2)
         {
@@ -295,12 +272,26 @@ public class Portlistener : MonoBehaviour
         }
 
     
-    public void Main(string[] args)
+    public Vector3[] ConvertToVector3Array (float[] floatX, float[] floatY)
+	    {
+		    float[] ZerosArray = new float [floatX.Length];
+            for (int k=0; k<floatX.Length; k++)
+            {
+                ZerosArray[k] = 0f;
+            }
+            List<Vector3> vector3List = new List<Vector3>();
+		    for ( int i = 0; i < floatX.Length; i++)
+		    {
+		    	vector3List.Add( new Vector3(floatX[i], floatY[i], ZerosArray[i]) );
+		    }
+		    return vector3List.ToArray();
+	    }
+    public Vector3[] Calculations(Vector3 BoomOneStart, Vector3 BoomOneEnd, Vector3 PistonOneStart, float PistonOneFraction)
     {
-        // defining variable/coordinate
-        Vector3 BoomOneStart = receivedPos3;
-        Vector3 BoomOneEnd = receivedPos4;
-        Vector3 PistonOneStart = receivedPos5;
+        // // defining variable/coordinate
+        // Vector3 BoomOneStart = receivedPos3;
+        // Vector3 BoomOneEnd = receivedPos4;
+        // Vector3 PistonOneStart = receivedPos5;
 
         float BoomOneStartX = BoomOneStart[0];
         float BoomOneStartY = BoomOneStart[1]; 
@@ -308,7 +299,7 @@ public class Portlistener : MonoBehaviour
         float BoomOneEndY = BoomOneEnd[1];
         float PistonOneStartX = PistonOneStart[0];
         float PistonOneStartY = PistonOneStart[1];
-        float PistonOneFraction = 0.8f;
+        // float PistonOneFraction = 0.8f;
 
         float PistonOneEndX = PistonOneFraction*(BoomOneEndX - BoomOneStartX) + BoomOneStartX;
         float PistonOneEndY = PistonOneFraction*(BoomOneEndY - BoomOneStartY) + BoomOneStartY;
@@ -407,11 +398,8 @@ public class Portlistener : MonoBehaviour
         float[] PistonOneY = new float [ArrayLengthOne];
         float[] BoomOneX = new float [ArrayLengthOne];
         float[] BoomOneY = new float [ArrayLengthOne];
-        float[] ZerosArray = new float [ArrayLengthOne];
-            for (int k=0; k<PistonOneX.Length; k++)
-            {
-                ZerosArray[k] = 0f;
-            }
+        
+           
             for (int j=0; j<PistonOneX.Length; j++)
             {
                 PistonOneX[j] = BoomLengthToPiston*((float)Math.Cos(Alpha+Theta[j])) + BoomOneStartX;
@@ -420,21 +408,82 @@ public class Portlistener : MonoBehaviour
                 BoomOneY[j] = (PistonOneY[j] - BoomOneStartY)/PistonOneFraction + BoomOneStartY;
             }
 
-        Vector3[] ConvertToVector3Array (float[] floatX, float[] floatY)
-	    {
-		    List<Vector3> vector3List = new List<Vector3>();
-		    for ( int i = 0; i < floatX.Length; i++)
-		    {
-		    	vector3List.Add( new Vector3(floatX[i], floatY[i], ZerosArray[i]) );
-		    }
-		    return vector3List.ToArray();
-	    }
-
         Vector3[] BoomOnePos = ConvertToVector3Array(BoomOneX, BoomOneY);
-        Vector3[] PistonOnePos = ConvertToVector3Array(PistonOneX, PistonOneY);
+        return BoomOnePos;
+        // Vector3[] PistonOnePos = ConvertToVector3Array(PistonOneX, PistonOneY);
 
+       
+        // return PistonOnePos;
 
     }
-            
+    
+    public Vector3 PistonEnd(Vector3 BoomStart, Vector3 BoomEnd, float PistonFraction)
+    {
+            float BoomStartX = BoomStart[0];
+            float BoomStartY = BoomStart[1]; 
+            float BoomEndX = BoomEnd[0];
+            float BoomEndY = BoomEnd[1];
+            float PistonEndX = (BoomEndX-BoomStartX)*PistonFraction +BoomStartX;
+            float PistonEndY = (BoomEndY-BoomStartY)*PistonFraction +BoomStartY; 
 
+            Vector3 PistonEnd = new Vector3(PistonEndX, PistonEndY, 0f);
+            return PistonEnd;
+    }   
+    public async void Update()
+    {
+        float PistonFractionOne = 0.5f;
+        Vector3 PistonOneEndPos = PistonEnd(receivedPos3, receivedPos4, PistonFractionOne);
+        Vector3[] BoomOnePos = Calculations(receivedPos3, receivedPos4, receivedPos5, PistonFractionOne);
+
+        if(!receivedPos4.Equals(zeros)&&!receivedPos3.Equals(zeros))
+        {
+            Vector3[] LinePosition1 = {receivedPos3,receivedPos4};
+            Line.SetPositions(LinePosition1);
+        }
+        else
+        {
+            Vector3[] LinePosition1 = {zeros, zeros};
+            Line.SetPositions(LinePosition1);
+        }
+
+        if(!receivedPos5.Equals(zeros)&&!PistonOneEndPos.Equals(zeros))
+        {
+            Vector3[] LinePosition2 = {receivedPos5,PistonOneEndPos};
+            PistonLine.SetPositions(LinePosition2);
+        }
+        else
+        {
+            Vector3[] LinePosition2 = {zeros, zeros};
+            PistonLine.SetPositions(LinePosition2);
+        }
+
+        // for(int i=0; i<BoomOnePos.Length; i++)
+        // {
+        //     BoomOneCurve.SetPosition(i, BoomOnePos[i]);
+        // }
+        
+        squareone.transform.position = receivedPos1; //assigning receivedPos in SendAndReceiveData()
+        squaretwo.transform.position = receivedPos2;
+        squarethree.transform.position = receivedPos3;
+        squarefour.transform.position = receivedPos4;
+        squarefive.transform.position = receivedPos5;
+        PistonOneEnd.transform.position = PistonOneEndPos;
+
+
+        squareone.transform.localScale = size; //assigning receivedPos in SendAndReceiveData()
+        squaretwo.transform.localScale = size;
+        squarethree.transform.localScale = size;
+        squarefour.transform.localScale = size;
+        squarefive.transform.localScale = size;
+
+        Vector3 trial1 = BoomOnePos[0];
+        Vector3 trial2 = BoomOnePos[1];
+        Vector3 trial3 = BoomOnePos[2];
+        BoomOneCurve.SetPosition(0, trial1);
+        BoomOneCurve.SetPosition(1, trial2);
+        BoomOneCurve.SetPosition(2, trial3);
+        
+
+       
+    }
 }
